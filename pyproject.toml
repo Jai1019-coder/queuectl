@@ -1,0 +1,48 @@
+[build-system]
+requires = ["setuptools>=69", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "queuectl"
+version = "0.1.0"
+description = "A small, durable command queue with workers, retries, and DLQ support."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.13",
+    "pydantic>=2.7",
+    "pydantic-settings>=2.2",
+    "sqlalchemy>=2.0",
+    "typer>=0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black>=24.4",
+    "mypy>=1.10",
+    "pytest>=8.2",
+    "pytest-cov>=5.0",
+    "ruff>=0.5",
+]
+
+[project.scripts]
+queuectl = "queuectl.main:app"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py312"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-ra"
