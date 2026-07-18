@@ -10,10 +10,15 @@ from queuectl.infrastructure.persistence.connection import SQLiteConnection
 
 
 def initialize_database(
-    database: str | Path,
+    connection: SQLiteConnection,
 ) -> None:
     """
-    Create all database tables.
+    Initialize the SQLite database schema.
+
+    This function executes schema.sql using an existing
+    SQLiteConnection. Using the same connection is important
+    when the database is ':memory:' because every in-memory
+    connection represents a different database.
     """
 
     schema_path = (
@@ -25,5 +30,5 @@ def initialize_database(
         encoding="utf-8",
     )
 
-    with SQLiteConnection(database) as connection:
-        connection.executescript(schema)
+    connection.connection.executescript(schema)
+    connection.commit()

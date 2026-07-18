@@ -22,11 +22,14 @@ from queuectl.domain.policies.retry_policy import RetryPolicy
 from queuectl.domain.value_objects.job_state import JobState
 from queuectl.infrastructure.repositories.in_memory_dlq_repository import (
     InMemoryDlqRepository,
-)
-from queuectl.infrastructure.repositories.in_memory_job_repository import (
-    InMemoryJobRepository,
-)
+)   
+from queuectl.infrastructure.persistence.connection import SQLiteConnection
+from queuectl.infrastructure.persistence.migrations import initialize_database
+from queuectl.infrastructure.repositories.sqlite_job_repository import SQLiteJobRepository
 
+connection = SQLiteConnection(":memory:")
+
+initialize_database(connection)
 
 def test_move_job_to_dead_letter_queue() -> None:
     """
@@ -37,7 +40,7 @@ def test_move_job_to_dead_letter_queue() -> None:
     # Arrange
     # ------------------------------------------------------------------
 
-    job_repository = InMemoryJobRepository()
+    job_repository = SQLiteJobRepository(connection)
     dlq_repository = InMemoryDlqRepository()
 
     retry_policy = RetryPolicy(max_retries=3)

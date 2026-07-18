@@ -11,15 +11,30 @@ CREATE TABLE IF NOT EXISTS jobs (
     started_at TEXT,
     completed_at TEXT,
     worker_id TEXT,
-    error_message TEXT
+    error_message TEXT,
+    FOREIGN KEY(worker_id)
+    REFERENCES workers(id)
+    ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS workers (
     id TEXT PRIMARY KEY,
     hostname TEXT NOT NULL,
     status TEXT NOT NULL,
+
     started_at TEXT NOT NULL,
-    heartbeat_at TEXT NOT NULL
+    last_heartbeat TEXT NOT NULL,
+
+    max_concurrency INTEGER NOT NULL,
+    jobs_processed INTEGER NOT NULL,
+
+    current_job_id TEXT,
+
+    tags TEXT NOT NULL,
+
+    FOREIGN KEY(current_job_id)
+        REFERENCES jobs(id)
+        ON DELETE SET NULL
 );
 
 CREATE TABLE IF NOT EXISTS dead_letter_queue (
