@@ -6,6 +6,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+from datetime import UTC, datetime
 from typing import Any
 
 from queuectl.domain.entities.job import Job
@@ -90,9 +91,7 @@ class SQLiteJobRepository(JobRepository):
         """
 
         if self.exists(job.id):
-            raise ValueError(
-                f"Job {job.id} already exists."
-            )
+            raise ValueError(f"Job {job.id} already exists.")
 
         data = self._serialize(job)
 
@@ -133,7 +132,7 @@ class SQLiteJobRepository(JobRepository):
         )
 
         self._db.commit()
-    
+
     def get(
         self,
         job_id: JobId,
@@ -194,9 +193,7 @@ class SQLiteJobRepository(JobRepository):
         )
 
         if cursor.rowcount == 0:
-            raise ValueError(
-                f"Job {job.id} does not exist."
-            )
+            raise ValueError(f"Job {job.id} does not exist.")
 
         self._db.commit()
 
@@ -239,7 +236,7 @@ class SQLiteJobRepository(JobRepository):
         )
 
         return cursor.fetchone()[0] > 0
-    
+
     def list(
         self,
         *,
@@ -281,10 +278,7 @@ class SQLiteJobRepository(JobRepository):
             tuple(parameters),
         )
 
-        return [
-            self._deserialize(row)
-            for row in cursor.fetchall()
-        ]
+        return [self._deserialize(row) for row in cursor.fetchall()]
 
     def next_available(self) -> Job | None:
         """
@@ -316,6 +310,101 @@ class SQLiteJobRepository(JobRepository):
 
         return None
 
+    def claim_next(
+        self,
+        worker_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> Job | None:
+        """
+        Atomically claim the next available job.
+
+        A ``BEGIN IMMEDIATE`` transaction is used to acquire SQLite's
+        write lock before selecting a candidate row, which serializes
+        this method against every other writer (including concurrent
+        ``claim_next`` calls from other worker processes). The
+        candidate is claimed with a single conditional ``UPDATE ...
+        WHERE state = 'pending'`` so a job can never be handed to more
+        than one caller, even under heavy contention.
+
+        Args:
+            worker_id:
+                Identifier of the worker claiming the job.
+
+            now:
+                Reference timestamp for availability and claim
+                stamping. Defaults to the current UTC time.
+
+        Returns:
+            The claimed job, or None if no job is currently available.
+
+        Raises:
+            ValueError:
+                If ``worker_id`` is empty.
+        """
+
+        if not worker_id:
+            raise ValueError("worker_id must not be empty.")
+
+        reference = (now or datetime.now(UTC)).isoformat()
+
+        self._db.execute("BEGIN IMMEDIATE")
+
+        try:
+            candidate = self._db.execute(
+                """
+                SELECT id
+                FROM jobs
+                WHERE state = ? AND available_at <= ?
+                ORDER BY priority DESC, created_at ASC
+                LIMIT 1
+                """,
+                (JobState.PENDING.value, reference),
+            ).fetchone()
+
+            if candidate is None:
+                self._db.commit()
+                return None
+
+            job_id = candidate["id"]
+
+            cursor = self._db.execute(
+                """
+                UPDATE jobs
+                SET
+                    state = ?,
+                    worker_id = ?,
+                    started_at = ?,
+                    updated_at = ?,
+                    error_message = NULL
+                WHERE id = ? AND state = ?
+                """,
+                (
+                    JobState.PROCESSING.value,
+                    worker_id,
+                    reference,
+                    reference,
+                    job_id,
+                    JobState.PENDING.value,
+                ),
+            )
+
+            if cursor.rowcount == 0:
+                self._db.commit()
+                return None
+
+            row = self._db.execute(
+                "SELECT * FROM jobs WHERE id = ?",
+                (job_id,),
+            ).fetchone()
+
+            self._db.commit()
+        except Exception:
+            self._db.rollback()
+            raise
+
+        return self._deserialize(row)
+
     def count(
         self,
         *,
@@ -327,12 +416,10 @@ class SQLiteJobRepository(JobRepository):
 
         if state is None:
 
-            cursor = self._db.execute(
-                """
+            cursor = self._db.execute("""
                 SELECT COUNT(*)
                 FROM jobs
-                """
-            )
+                """)
 
         else:
 
@@ -352,11 +439,9 @@ class SQLiteJobRepository(JobRepository):
         Remove every job.
         """
 
-        self._db.execute(
-            """
+        self._db.execute("""
             DELETE FROM jobs
-            """
-        )
+            """)
 
         self._db.commit()
 
@@ -370,7 +455,4 @@ class SQLiteJobRepository(JobRepository):
         return self.exists(job_id)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}"
-            f"(jobs={self.count()})"
-        )
+        return f"{self.__class__.__name__}" f"(jobs={self.count()})"

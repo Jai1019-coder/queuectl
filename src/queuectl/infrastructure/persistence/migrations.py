@@ -21,10 +21,7 @@ def initialize_database(
     connection represents a different database.
     """
 
-    schema_path = (
-        Path(__file__).parent
-        / "schema.sql"
-    )
+    schema_path = Path(__file__).parent / "schema.sql"
 
     schema = schema_path.read_text(
         encoding="utf-8",

@@ -43,6 +43,7 @@ def test_complete_processing_job() -> None:
     assert saved_job.state == JobState.COMPLETED
     assert saved_job.completed_at is not None
 
+
 def test_complete_nonexistent_job_raises_error() -> None:
     """
     Completing a non-existent job should raise ValueError.
@@ -54,6 +55,7 @@ def test_complete_nonexistent_job_raises_error() -> None:
 
     with pytest.raises(ValueError):
         complete.execute(job_id="invalid-job-id")
+
 
 def test_cannot_complete_pending_job() -> None:
     """
@@ -71,6 +73,7 @@ def test_cannot_complete_pending_job() -> None:
 
     with pytest.raises(ValueError):
         complete.execute(job_id=job.id)
+
 
 def test_completed_job_is_saved() -> None:
     """

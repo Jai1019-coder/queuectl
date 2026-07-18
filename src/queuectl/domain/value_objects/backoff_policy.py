@@ -51,9 +51,7 @@ class BackoffPolicy:
             raise ValueError("multiplier must be at least 1.")
 
         if self.max_delay < self.initial_delay:
-            raise ValueError(
-                "max_delay cannot be smaller than initial_delay."
-            )
+            raise ValueError("max_delay cannot be smaller than initial_delay.")
 
     def get_delay(self, attempt: int) -> int:
         """

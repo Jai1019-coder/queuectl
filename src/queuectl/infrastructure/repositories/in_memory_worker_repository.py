@@ -33,9 +33,7 @@ class InMemoryWorkerRepository(WorkerRepository):
                 If a worker with the same ID already exists.
         """
         if worker.id in self._workers:
-            raise ValueError(
-                f"Worker '{worker.id}' already exists."
-            )
+            raise ValueError(f"Worker '{worker.id}' already exists.")
 
         self._workers[worker.id] = worker
 
@@ -54,9 +52,7 @@ class InMemoryWorkerRepository(WorkerRepository):
                 If the worker does not exist.
         """
         if worker.id not in self._workers:
-            raise ValueError(
-                f"Worker '{worker.id}' does not exist."
-            )
+            raise ValueError(f"Worker '{worker.id}' does not exist.")
 
         self._workers[worker.id] = worker
 
@@ -93,11 +89,7 @@ class InMemoryWorkerRepository(WorkerRepository):
         )
 
         if status is not None:
-            workers = [
-                worker
-                for worker in workers
-                if worker.status is status
-            ]
+            workers = [worker for worker in workers if worker.status is status]
 
         if offset > 0:
             workers = workers[offset:]
@@ -112,15 +104,9 @@ class InMemoryWorkerRepository(WorkerRepository):
         Return workers currently available to execute jobs.
         """
 
-        workers = [
-            worker
-            for worker in self._workers.values()
-            if worker.is_available()
-        ]
+        workers = [worker for worker in self._workers.values() if worker.is_available()]
 
-        workers.sort(
-            key=lambda worker: worker.started_at
-        )
+        workers.sort(key=lambda worker: worker.started_at)
 
         return workers
 
@@ -138,11 +124,7 @@ class InMemoryWorkerRepository(WorkerRepository):
         if status is None:
             return len(self._workers)
 
-        return sum(
-            1
-            for worker in self._workers.values()
-            if worker.status is status
-        )
+        return sum(1 for worker in self._workers.values() if worker.status is status)
 
     def clear(self) -> None:
         """
@@ -168,7 +150,4 @@ class InMemoryWorkerRepository(WorkerRepository):
         """
         Return a developer-friendly representation.
         """
-        return (
-            f"{self.__class__.__name__}"
-            f"(workers={len(self._workers)})"
-        )
+        return f"{self.__class__.__name__}" f"(workers={len(self._workers)})"

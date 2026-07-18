@@ -45,13 +45,4 @@ class ProcessJob:
             The claimed job, or None if no job is available.
         """
 
-        job = self._repository.next_available()
-
-        if job is None:
-            return None
-
-        job.claim(worker_id)
-
-        self._repository.update(job)
-
-        return job
+        return self._repository.claim_next(worker_id=worker_id)

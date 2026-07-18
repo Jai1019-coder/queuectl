@@ -6,6 +6,9 @@ Primarily intended for testing and local development.
 
 from __future__ import annotations
 
+import threading
+from datetime import UTC, datetime
+
 from queuectl.domain.entities.job import Job
 from queuectl.domain.value_objects.job_id import JobId
 from queuectl.domain.value_objects.job_state import JobState
@@ -16,7 +19,8 @@ class InMemoryJobRepository(JobRepository):
     """
     In-memory implementation of the JobRepository interface.
 
-    Jobs are stored in a dictionary keyed by JobId.
+    Jobs are stored in a dictionary keyed by JobId. A lock guards
+    :meth:`claim_next` so concurrent threads never claim the same job.
     """
 
     def __init__(self) -> None:
@@ -24,6 +28,7 @@ class InMemoryJobRepository(JobRepository):
         Initialize an empty repository.
         """
         self._jobs: dict[JobId, Job] = {}
+        self._lock = threading.Lock()
 
     def save(self, job: Job) -> None:
         """
@@ -110,11 +115,7 @@ class InMemoryJobRepository(JobRepository):
         2. Earlier creation time first.
         """
 
-        candidates = [
-            job
-            for job in self._jobs.values()
-            if job.can_be_claimed()
-        ]
+        candidates = [job for job in self._jobs.values() if job.can_be_claimed()]
 
         if not candidates:
             return None
@@ -127,6 +128,60 @@ class InMemoryJobRepository(JobRepository):
         )
 
         return candidates[0]
+
+    def claim_next(
+        self,
+        worker_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> Job | None:
+        """
+        Atomically claim the next available job.
+
+        A lock is held for the entire select-and-mutate sequence so
+        that concurrent threads calling this method can never both
+        receive the same job.
+
+        Args:
+            worker_id:
+                Identifier of the worker claiming the job.
+
+            now:
+                Reference timestamp for availability and claim
+                stamping. Defaults to the current UTC time.
+
+        Returns:
+            The claimed job, or None if no job is currently available.
+
+        Raises:
+            ValueError:
+                If ``worker_id`` is empty.
+        """
+        if not worker_id:
+            raise ValueError("worker_id must not be empty.")
+
+        reference = now or datetime.now(UTC)
+
+        with self._lock:
+            candidates = [
+                job for job in self._jobs.values() if job.can_be_claimed(now=reference)
+            ]
+
+            if not candidates:
+                return None
+
+            candidates.sort(
+                key=lambda job: (
+                    -job.priority,
+                    job.created_at,
+                )
+            )
+
+            job = candidates[0]
+            job.claim(worker_id, now=reference)
+            self._jobs[job.id] = job
+
+            return job
 
     def count(
         self,
@@ -142,11 +197,7 @@ class InMemoryJobRepository(JobRepository):
         if state is None:
             return len(self._jobs)
 
-        return sum(
-            1
-            for job in self._jobs.values()
-            if job.state is state
-        )
+        return sum(1 for job in self._jobs.values() if job.state is state)
 
     def clear(self) -> None:
         """
@@ -172,7 +223,4 @@ class InMemoryJobRepository(JobRepository):
         """
         Return a developer-friendly representation.
         """
-        return (
-            f"{self.__class__.__name__}"
-            f"(jobs={len(self._jobs)})"
-        )
+        return f"{self.__class__.__name__}" f"(jobs={len(self._jobs)})"

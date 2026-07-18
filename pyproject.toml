@@ -9,10 +9,8 @@ description = "A small, durable command queue with workers, retries, and DLQ sup
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic>=1.13",
     "pydantic>=2.7",
     "pydantic-settings>=2.2",
-    "sqlalchemy>=2.0",
     "typer>=0.12",
 ]
 

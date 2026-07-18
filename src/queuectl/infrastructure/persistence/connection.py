@@ -42,9 +42,7 @@ class SQLiteConnection:
 
             self._connection.row_factory = sqlite3.Row
 
-            self._connection.execute(
-                "PRAGMA foreign_keys = ON;"
-            )
+            self._connection.execute("PRAGMA foreign_keys = ON;")
 
         return self._connection
 

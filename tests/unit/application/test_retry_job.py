@@ -4,13 +4,11 @@ Unit tests for RetryJob use case.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
-
 import pytest
 
 from queuectl.application.use_cases.enqueue_job import EnqueueJob
-from queuectl.application.use_cases.process_job import ProcessJob
 from queuectl.application.use_cases.fail_job import FailJob
+from queuectl.application.use_cases.process_job import ProcessJob
 from queuectl.application.use_cases.retry_job import RetryJob
 from queuectl.domain.policies.retry_policy import RetryPolicy
 from queuectl.domain.value_objects.job_id import JobId
@@ -72,7 +70,6 @@ def test_retry_nonexistent_job_raises_error() -> None:
 
     with pytest.raises(ValueError):
         retry.execute(job_id=invalid_job_id)
-
 
 
 def test_retry_limit_reached_returns_none() -> None:

@@ -53,9 +53,7 @@ class SQLiteWorkerRepository(WorkerRepository):
     ) -> None:
 
         if self.exists(worker.id):
-            raise ValueError(
-                f"Worker '{worker.id}' already exists."
-            )
+            raise ValueError(f"Worker '{worker.id}' already exists.")
 
         self._db.execute(
             """
@@ -131,9 +129,7 @@ class SQLiteWorkerRepository(WorkerRepository):
         )
 
         if cursor.rowcount == 0:
-            raise ValueError(
-                f"Worker '{worker.id}' does not exist."
-            )
+            raise ValueError(f"Worker '{worker.id}' does not exist.")
 
         self._connection.commit()
 
@@ -207,10 +203,7 @@ class SQLiteWorkerRepository(WorkerRepository):
             tuple(params),
         )
 
-        return [
-            self._deserialize(row)
-            for row in cursor.fetchall()
-        ]
+        return [self._deserialize(row) for row in cursor.fetchall()]
 
     def list_available(self) -> list[Worker]:
 
@@ -224,16 +217,9 @@ class SQLiteWorkerRepository(WorkerRepository):
             (WorkerStatus.ONLINE.value,),
         )
 
-        workers = [
-            self._deserialize(row)
-            for row in cursor.fetchall()
-        ]
+        workers = [self._deserialize(row) for row in cursor.fetchall()]
 
-        return [
-            worker
-            for worker in workers
-            if worker.is_available()
-        ]
+        return [worker for worker in workers if worker.is_available()]
 
     def count(
         self,
@@ -243,12 +229,10 @@ class SQLiteWorkerRepository(WorkerRepository):
 
         if status is None:
 
-            cursor = self._db.execute(
-                """
+            cursor = self._db.execute("""
                 SELECT COUNT(*)
                 FROM workers
-                """
-            )
+                """)
 
         else:
 
@@ -265,11 +249,9 @@ class SQLiteWorkerRepository(WorkerRepository):
 
     def clear(self) -> None:
 
-        self._db.execute(
-            """
+        self._db.execute("""
             DELETE FROM workers
-            """
-        )
+            """)
 
         self._connection.commit()
 
@@ -283,7 +265,4 @@ class SQLiteWorkerRepository(WorkerRepository):
         return self.exists(worker_id)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}"
-            f"(workers={self.count()})"
-        )
+        return f"{self.__class__.__name__}" f"(workers={self.count()})"

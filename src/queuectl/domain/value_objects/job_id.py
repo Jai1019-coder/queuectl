@@ -24,7 +24,7 @@ class JobId:
     value: UUID
 
     @classmethod
-    def generate(cls) -> "JobId":
+    def generate(cls) -> JobId:
         """
         Generate a new unique JobId.
 
@@ -34,7 +34,7 @@ class JobId:
         return cls(uuid4())
 
     @classmethod
-    def from_string(cls, value: str) -> "JobId":
+    def from_string(cls, value: str) -> JobId:
         """
         Create a JobId from a UUID string.
 

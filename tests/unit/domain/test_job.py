@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
@@ -10,7 +10,7 @@ from queuectl.domain.entities.job import Job
 from queuectl.domain.value_objects.job_id import JobId
 from queuectl.domain.value_objects.job_state import JobState
 
-FIXED_NOW = datetime(2026, 1, 1, 12, 0, 0, tzinfo=timezone.utc)
+FIXED_NOW = datetime(2026, 1, 1, 12, 0, 0, tzinfo=UTC)
 LATER = FIXED_NOW + timedelta(seconds=30)
 EVEN_LATER = FIXED_NOW + timedelta(seconds=90)
 
@@ -79,9 +79,9 @@ class TestCreate:
         assert job.error_message is None
 
     def test_create_without_now_uses_current_time(self) -> None:
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         job = Job.create(name="noop")
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
         assert before <= job.created_at <= after
 
     def test_create_rejects_empty_name(self) -> None:
@@ -120,7 +120,7 @@ class TestCanBeClaimed:
         assert job.can_be_claimed(now=LATER) is False
 
     def test_can_be_claimed_defaults_now_to_current_time(self) -> None:
-        job = make_job(now=datetime.now(timezone.utc) - timedelta(seconds=1))
+        job = make_job(now=datetime.now(UTC) - timedelta(seconds=1))
         assert job.can_be_claimed() is True
 
 
@@ -550,9 +550,9 @@ class TestTouch:
 
     def test_touch_defaults_now_to_current_time(self) -> None:
         job = make_job()
-        before = datetime.now(timezone.utc)
+        before = datetime.now(UTC)
         job.touch()
-        after = datetime.now(timezone.utc)
+        after = datetime.now(UTC)
         assert before <= job.updated_at <= after
 
 

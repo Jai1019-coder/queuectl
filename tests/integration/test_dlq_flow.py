@@ -10,7 +10,7 @@ Workflow:
     Move To DLQ
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from queuectl.application.use_cases.enqueue_job import EnqueueJob
 from queuectl.application.use_cases.fail_job import FailJob
@@ -20,16 +20,19 @@ from queuectl.application.use_cases.process_job import ProcessJob
 from queuectl.application.use_cases.retry_job import RetryJob
 from queuectl.domain.policies.retry_policy import RetryPolicy
 from queuectl.domain.value_objects.job_state import JobState
-from queuectl.infrastructure.repositories.in_memory_dlq_repository import (
-    InMemoryDlqRepository,
-)   
 from queuectl.infrastructure.persistence.connection import SQLiteConnection
 from queuectl.infrastructure.persistence.migrations import initialize_database
-from queuectl.infrastructure.repositories.sqlite_job_repository import SQLiteJobRepository
+from queuectl.infrastructure.repositories.in_memory_dlq_repository import (
+    InMemoryDlqRepository,
+)
+from queuectl.infrastructure.repositories.sqlite_job_repository import (
+    SQLiteJobRepository,
+)
 
 connection = SQLiteConnection(":memory:")
 
 initialize_database(connection)
+
 
 def test_move_job_to_dead_letter_queue() -> None:
     """
@@ -93,7 +96,7 @@ def test_move_job_to_dead_letter_queue() -> None:
             break
 
         # Make the job immediately available again.
-        retried_job.available_at = datetime.now(timezone.utc)
+        retried_job.available_at = datetime.now(UTC)
         job_repository.update(retried_job)
 
     # ------------------------------------------------------------------

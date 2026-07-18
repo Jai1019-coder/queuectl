@@ -55,16 +55,12 @@ class ReplayDlqJob:
         dlq_entry = self._dlq_repository.get(job_id)
 
         if dlq_entry is None:
-            raise ValueError(
-                f"DLQ entry for job '{job_id}' does not exist."
-            )
+            raise ValueError(f"DLQ entry for job '{job_id}' does not exist.")
 
         job = self._job_repository.get(job_id)
 
         if job is None:
-            raise ValueError(
-                f"Job '{job_id}' does not exist."
-            )
+            raise ValueError(f"Job '{job_id}' does not exist.")
 
         job.reset()
 

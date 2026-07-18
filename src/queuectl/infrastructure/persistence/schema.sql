@@ -11,10 +11,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     started_at TEXT,
     completed_at TEXT,
     worker_id TEXT,
-    error_message TEXT,
-    FOREIGN KEY(worker_id)
-    REFERENCES workers(id)
-    ON DELETE SET NULL
+    error_message TEXT
 );
 
 CREATE TABLE IF NOT EXISTS workers (
@@ -30,11 +27,7 @@ CREATE TABLE IF NOT EXISTS workers (
 
     current_job_id TEXT,
 
-    tags TEXT NOT NULL,
-
-    FOREIGN KEY(current_job_id)
-        REFERENCES jobs(id)
-        ON DELETE SET NULL
+    tags TEXT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS dead_letter_queue (
@@ -42,5 +35,5 @@ CREATE TABLE IF NOT EXISTS dead_letter_queue (
     reason TEXT NOT NULL,
     failed_at TEXT NOT NULL,
     retry_count INTEGER NOT NULL,
-    FOREIGN KEY(job_id) REFERENCES jobs(id)
+    error_message TEXT NOT NULL
 );

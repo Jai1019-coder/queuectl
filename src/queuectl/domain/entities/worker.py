@@ -7,7 +7,7 @@ Represents a worker process capable of executing jobs.
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from queuectl.domain.value_objects.job_id import JobId
@@ -16,7 +16,7 @@ from queuectl.domain.value_objects.worker_status import WorkerStatus
 
 def _utcnow() -> datetime:
     """Return current UTC time."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(slots=True)
@@ -43,9 +43,7 @@ class Worker:
             raise ValueError("Hostname cannot be empty.")
 
         if self.max_concurrency <= 0:
-            raise ValueError(
-                "max_concurrency must be greater than zero."
-            )
+            raise ValueError("max_concurrency must be greater than zero.")
 
     @classmethod
     def register(
@@ -56,7 +54,7 @@ class Worker:
         max_concurrency: int = 1,
         tags: list[str] | None = None,
         now: datetime | None = None,
-    ) -> "Worker":
+    ) -> Worker:
         """
         Register a new worker.
         """
@@ -90,9 +88,7 @@ class Worker:
         Assign a job to this worker.
         """
         if self.status != WorkerStatus.ONLINE:
-            raise ValueError(
-                "Only ONLINE workers can accept jobs."
-            )
+            raise ValueError("Only ONLINE workers can accept jobs.")
 
         self.current_job_id = job_id
         self.status = WorkerStatus.BUSY
@@ -129,9 +125,7 @@ class Worker:
         Bring worker online.
         """
         if self.current_job_id is not None:
-            raise ValueError(
-                "Worker still owns a job."
-            )
+            raise ValueError("Worker still owns a job.")
 
         self.status = WorkerStatus.ONLINE
 
@@ -170,9 +164,7 @@ class Worker:
             "max_concurrency": self.max_concurrency,
             "jobs_processed": self.jobs_processed,
             "current_job_id": (
-                str(self.current_job_id)
-                if self.current_job_id
-                else None
+                str(self.current_job_id) if self.current_job_id else None
             ),
             "tags": self.tags,
         }
@@ -181,7 +173,7 @@ class Worker:
     def from_dict(
         cls,
         data: dict[str, Any],
-    ) -> "Worker":
+    ) -> Worker:
         """
         Deserialize worker.
         """
@@ -189,12 +181,8 @@ class Worker:
             id=data["id"],
             hostname=data["hostname"],
             status=WorkerStatus(data["status"]),
-            started_at=datetime.fromisoformat(
-                data["started_at"]
-            ),
-            last_heartbeat=datetime.fromisoformat(
-                data["last_heartbeat"]
-            ),
+            started_at=datetime.fromisoformat(data["started_at"]),
+            last_heartbeat=datetime.fromisoformat(data["last_heartbeat"]),
             max_concurrency=data["max_concurrency"],
             jobs_processed=data["jobs_processed"],
             current_job_id=(

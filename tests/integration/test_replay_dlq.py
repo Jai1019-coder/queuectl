@@ -20,7 +20,7 @@ Workflow:
     Complete
 """
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from queuectl.application.use_cases.complete_job import CompleteJob
 from queuectl.application.use_cases.enqueue_job import EnqueueJob
@@ -107,7 +107,7 @@ def test_replay_job_from_dead_letter_queue() -> None:
             break
 
         # Make immediately available for next retry.
-        retried_job.available_at = datetime.now(timezone.utc)
+        retried_job.available_at = datetime.now(UTC)
         job_repository.update(retried_job)
 
     # ------------------------------------------------------------------

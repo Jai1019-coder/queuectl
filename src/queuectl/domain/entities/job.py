@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from queuectl.domain.value_objects.job_id import JobId
@@ -16,7 +16,7 @@ def _utcnow() -> datetime:
     Returns:
         datetime: The current time expressed in UTC with timezone info.
     """
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(slots=True)
@@ -87,7 +87,7 @@ class Job:
         job_id: JobId | None = None,
         *,
         now: datetime | None = None,
-    ) -> "Job":
+    ) -> Job:
         """Create a new job in the ``PENDING`` state.
 
         Args:
@@ -213,9 +213,7 @@ class Job:
         self.error_message = None
         self.updated_at = reference
 
-    def mark_failed(
-        self, error_message: str, *, now: datetime | None = None
-    ) -> None:
+    def mark_failed(self, error_message: str, *, now: datetime | None = None) -> None:
         """Transition the job to the ``FAILED`` state.
 
         Args:
@@ -232,9 +230,7 @@ class Job:
         if not error_message:
             raise ValueError("error_message must not be empty.")
         if self.state is not JobState.PROCESSING:
-            raise ValueError(
-                f"Job {self.id} cannot be failed from state {self.state}."
-            )
+            raise ValueError(f"Job {self.id} cannot be failed from state {self.state}.")
         reference = now if now is not None else _utcnow()
         self.state = JobState.FAILED
         self.error_message = error_message
@@ -298,9 +294,7 @@ class Job:
             ValueError: If the job is currently ``COMPLETED``.
         """
         if self.state is JobState.COMPLETED:
-            raise ValueError(
-                f"Job {self.id} cannot be moved to DEAD from COMPLETED."
-            )
+            raise ValueError(f"Job {self.id} cannot be moved to DEAD from COMPLETED.")
         reference = now if now is not None else _utcnow()
         self.state = JobState.DEAD
         self.updated_at = reference
@@ -420,7 +414,7 @@ class Job:
         }
 
     @classmethod
-    def from_dict(cls, data: dict[str, Any]) -> "Job":
+    def from_dict(cls, data: dict[str, Any]) -> Job:
         """Deserialize a job from a JSON-compatible dictionary.
 
         Args:

@@ -24,6 +24,7 @@ def test_job_repository_cannot_be_instantiated():
 
 class IncompleteJobRepository(JobRepository):
     """Implements nothing."""
+
     pass
 
 
@@ -55,6 +56,9 @@ class DummyJobRepository(JobRepository):
         return []
 
     def next_available(self):
+        return None
+
+    def claim_next(self, worker_id, *, now=None):
         return None
 
     def count(self, *, state=None):

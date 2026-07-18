@@ -33,9 +33,7 @@ class InMemoryDlqRepository(DlqRepository):
                 If an entry with the same Job ID already exists.
         """
         if entry.job_id in self._entries:
-            raise ValueError(
-                f"DLQ entry for job {entry.job_id} already exists."
-            )
+            raise ValueError(f"DLQ entry for job {entry.job_id} already exists.")
 
         self._entries[entry.job_id] = entry
 
@@ -112,7 +110,4 @@ class InMemoryDlqRepository(DlqRepository):
         """
         Return a developer-friendly representation.
         """
-        return (
-            f"{self.__class__.__name__}"
-            f"(entries={len(self._entries)})"
-        )
+        return f"{self.__class__.__name__}" f"(entries={len(self._entries)})"

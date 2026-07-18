@@ -38,6 +38,7 @@ def test_process_job_claims_next_available_job() -> None:
     assert saved_job.worker_id == "worker-1"
     assert saved_job.state == JobState.PROCESSING
 
+
 def test_process_job_returns_none_when_queue_is_empty() -> None:
     """
     ProcessJob should return None when no jobs exist.
@@ -50,6 +51,7 @@ def test_process_job_returns_none_when_queue_is_empty() -> None:
     job = process.execute(worker_id="worker-1")
 
     assert job is None
+
 
 def test_process_job_claims_highest_priority_job() -> None:
     """
@@ -76,6 +78,7 @@ def test_process_job_claims_highest_priority_job() -> None:
     assert job is not None
     assert job.name == "high"
     assert job.priority == 10
+
 
 def test_claimed_job_is_no_longer_available() -> None:
     """

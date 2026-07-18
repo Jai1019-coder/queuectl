@@ -7,8 +7,8 @@ from __future__ import annotations
 import pytest
 
 from queuectl.application.use_cases.enqueue_job import EnqueueJob
-from queuectl.application.use_cases.process_job import ProcessJob
 from queuectl.application.use_cases.fail_job import FailJob
+from queuectl.application.use_cases.process_job import ProcessJob
 from queuectl.domain.value_objects.job_id import JobId
 from queuectl.domain.value_objects.job_state import JobState
 from tests.fakes.fake_job_repository import FakeJobRepository

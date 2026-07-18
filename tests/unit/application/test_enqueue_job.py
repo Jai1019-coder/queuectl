@@ -41,6 +41,8 @@ def test_enqueue_job_creates_new_job() -> None:
     assert saved_job.priority == 5
     assert saved_job.state == JobState.PENDING
     assert saved_job.retry_count == 0
+
+
 def test_enqueue_job_repository_count() -> None:
     """
     Repository should contain one job after enqueueing.

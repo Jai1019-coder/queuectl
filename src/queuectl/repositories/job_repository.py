@@ -9,6 +9,7 @@ must implement this interface.
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
+from datetime import datetime
 
 from queuectl.domain.entities.job import Job
 from queuectl.domain.value_objects.job_id import JobId
@@ -112,6 +113,38 @@ class JobRepository(ABC):
 
         Returns:
             Job if available, otherwise None.
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def claim_next(
+        self,
+        worker_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> Job | None:
+        """
+        Atomically claim the next available job for a worker.
+
+        Implementations MUST guarantee that when multiple callers
+        (threads, processes, or workers) invoke this method
+        concurrently, at most one caller receives any given job.
+        This is the only safe way to claim work; ``next_available``
+        is a non-atomic preview and must never be used to drive
+        job execution.
+
+        Args:
+            worker_id:
+                Identifier of the worker claiming the job.
+
+            now:
+                Reference timestamp used to evaluate availability
+                and to stamp the claim. Defaults to the current
+                UTC time.
+
+        Returns:
+            The claimed job (already transitioned to ``PROCESSING``
+            and persisted), or None if no job is currently available.
         """
         raise NotImplementedError
 

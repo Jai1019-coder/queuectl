@@ -4,13 +4,13 @@ Tests for SQLiteJobRepository.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 
 import pytest
 
 from queuectl.domain.entities.job import Job
+from queuectl.domain.entities.worker import Worker
 from queuectl.domain.value_objects.job_state import JobState
-
 from queuectl.infrastructure.persistence.connection import SQLiteConnection
 from queuectl.infrastructure.persistence.migrations import (
     initialize_database,
@@ -18,13 +18,11 @@ from queuectl.infrastructure.persistence.migrations import (
 from queuectl.infrastructure.repositories.sqlite_job_repository import (
     SQLiteJobRepository,
 )
-from queuectl.domain.entities.worker import Worker
 from queuectl.infrastructure.repositories.sqlite_worker_repository import (
     SQLiteWorkerRepository,
 )
-from datetime import datetime, timezone
 
-now = datetime.now(timezone.utc)
+now = datetime.now(UTC)
 
 # ----------------------------------------------------------------------
 # Fixtures
@@ -73,7 +71,7 @@ def utc(
         hour,
         minute,
         second,
-        tzinfo=timezone.utc,
+        tzinfo=UTC,
     )
 
 
@@ -114,6 +112,7 @@ def test_save_and_get_job(
     assert loaded.priority == job.priority
     assert loaded.state == JobState.PENDING
     assert loaded.payload == {}
+
 
 # ----------------------------------------------------------------------
 # Duplicate Save
@@ -262,13 +261,19 @@ def test_count_by_state(
 
     repository.update(second)
 
-    assert repository.count(
-        state=JobState.PENDING,
-    ) == 1
+    assert (
+        repository.count(
+            state=JobState.PENDING,
+        )
+        == 1
+    )
 
-    assert repository.count(
-        state=JobState.PROCESSING,
-    ) == 1
+    assert (
+        repository.count(
+            state=JobState.PROCESSING,
+        )
+        == 1
+    )
 
 
 # ----------------------------------------------------------------------
@@ -318,6 +323,7 @@ def test_contains_operator(
     repository.delete(job.id)
 
     assert job.id not in repository
+
 
 # ----------------------------------------------------------------------
 # List
@@ -498,10 +504,7 @@ def test_list_state_filter_with_limit(
 
     assert len(processing) == 2
 
-    assert all(
-        job.state == JobState.PROCESSING
-        for job in processing
-    )
+    assert all(job.state == JobState.PROCESSING for job in processing)
 
 
 def test_list_returns_new_objects(
@@ -519,6 +522,7 @@ def test_list_returns_new_objects(
     assert first is not second
 
     assert first[0] == second[0]
+
 
 # ----------------------------------------------------------------------
 # next_available()
@@ -597,40 +601,6 @@ def test_next_available_breaks_priority_ties_by_creation_time(
     assert job.name == "older"
 
 
-def test_next_available_ignores_future_jobs(
-    repository: SQLiteJobRepository,
-):
-
-    now = utc(2035, 1, 1)
-
-    future = create_job(
-        name="future",
-        priority=100,
-        now=now,
-    )
-
-    future.schedule_retry(
-        3600,
-        now=now,
-    )
-
-    available = create_job(
-        name="available",
-        priority=1,
-        now=now,
-    )
-
-    repository.save(future)
-    repository.save(available)
-
-    repository.update(future)
-
-    job = repository.next_available()
-
-    assert job is not None
-    assert job.name == "available"
-
-
 def test_next_available_ignores_processing_jobs(
     repository: SQLiteJobRepository,
 ):
@@ -648,11 +618,11 @@ def test_next_available_ignores_processing_jobs(
     assert repository.next_available() is None
 
 
-def test_next_available_ignores_future_jobs(
+def test_next_available_ignores_future_jobs_with_default_now(
     repository: SQLiteJobRepository,
 ):
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     future = create_job(
         name="future",
@@ -732,7 +702,7 @@ def test_next_available_skips_unavailable_high_priority_job(
     repository: SQLiteJobRepository,
 ):
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     high = create_job(
         priority=100,
@@ -761,7 +731,7 @@ def test_next_available_returns_first_claimable_job(
     repository: SQLiteJobRepository,
 ):
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
 
     jobs = []
 
@@ -782,6 +752,7 @@ def test_next_available_returns_first_claimable_job(
 
     assert result is not None
     assert result.priority == 7
+
 
 # ----------------------------------------------------------------------
 # Serialization
@@ -1062,6 +1033,7 @@ def test_next_available_after_clear(
     repository.clear()
 
     assert repository.next_available() is None
+
 
 # ----------------------------------------------------------------------
 # Regression Tests

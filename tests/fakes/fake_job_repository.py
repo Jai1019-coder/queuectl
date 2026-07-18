@@ -4,6 +4,8 @@ In-memory implementation of JobRepository for unit testing.
 
 from __future__ import annotations
 
+from datetime import UTC, datetime
+
 from queuectl.domain.entities.job import Job
 from queuectl.domain.value_objects.job_id import JobId
 from queuectl.domain.value_objects.job_state import JobState
@@ -56,10 +58,9 @@ class FakeJobRepository(JobRepository):
         return jobs
 
     def next_available(self) -> Job | None:
+        now = datetime.now(UTC)
         available_jobs = [
-            job
-            for job in self._jobs.values()
-            if job.state == JobState.PENDING
+            job for job in self._jobs.values() if job.can_be_claimed(now=now)
         ]
 
         if not available_jobs:
@@ -70,6 +71,30 @@ class FakeJobRepository(JobRepository):
             key=lambda job: (job.priority, job.created_at),
         )
 
+    def claim_next(
+        self,
+        worker_id: str,
+        *,
+        now: datetime | None = None,
+    ) -> Job | None:
+        reference = now or datetime.now(UTC)
+        available_jobs = [
+            job for job in self._jobs.values() if job.can_be_claimed(now=reference)
+        ]
+
+        if not available_jobs:
+            return None
+
+        job = max(
+            available_jobs,
+            key=lambda job: (job.priority, job.created_at),
+        )
+
+        job.claim(worker_id, now=reference)
+        self._jobs[job.id] = job
+
+        return job
+
     def count(
         self,
         *,
@@ -78,11 +103,7 @@ class FakeJobRepository(JobRepository):
         if state is None:
             return len(self._jobs)
 
-        return sum(
-            1
-            for job in self._jobs.values()
-            if job.state == state
-        )
+        return sum(1 for job in self._jobs.values() if job.state == state)
 
     def clear(self) -> None:
         self._jobs.clear()

@@ -5,7 +5,6 @@ Application use case for moving a job to the Dead Letter Queue.
 from __future__ import annotations
 
 from queuectl.domain.entities.dlq_entry import DlqEntry
-from queuectl.domain.entities.job import Job
 from queuectl.domain.policies.retry_policy import RetryPolicy
 from queuectl.domain.value_objects.job_id import JobId
 from queuectl.repositories.dlq_repository import DlqRepository
@@ -69,9 +68,7 @@ class MoveToDlq:
             raise ValueError(f"Job '{job_id}' does not exist.")
 
         if not self._retry_policy.is_exhausted(job.retry_count):
-            raise RuntimeError(
-                "Job still has retry attempts remaining."
-            )
+            raise RuntimeError("Job still has retry attempts remaining.")
 
         job.move_to_dead()
 

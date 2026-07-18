@@ -41,9 +41,7 @@ class SQLiteDlqRepository(DlqRepository):
     ) -> None:
 
         if self.exists(entry.job_id):
-            raise ValueError(
-                f"DLQ entry for job {entry.job_id} already exists."
-            )
+            raise ValueError(f"DLQ entry for job {entry.job_id} already exists.")
 
         self._db.execute(
             """
@@ -152,30 +150,23 @@ class SQLiteDlqRepository(DlqRepository):
             tuple(parameters),
         )
 
-        return [
-            self._deserialize(row)
-            for row in cursor.fetchall()
-        ]
+        return [self._deserialize(row) for row in cursor.fetchall()]
 
     def count(self) -> int:
 
-        cursor = self._db.execute(
-            """
+        cursor = self._db.execute("""
             SELECT COUNT(*)
             FROM dead_letter_queue
-            """
-        )
+            """)
 
         return int(cursor.fetchone()[0])
 
     def clear(self) -> None:
 
-        self._db.execute(
-            """
+        self._db.execute("""
             DELETE
             FROM dead_letter_queue
-            """
-        )
+            """)
 
         self._connection.commit()
 
@@ -189,7 +180,4 @@ class SQLiteDlqRepository(DlqRepository):
         return self.exists(job_id)
 
     def __repr__(self) -> str:
-        return (
-            f"{self.__class__.__name__}"
-            f"(entries={self.count()})"
-        )
+        return f"{self.__class__.__name__}" f"(entries={self.count()})"

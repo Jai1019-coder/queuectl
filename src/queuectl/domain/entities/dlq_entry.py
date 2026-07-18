@@ -7,7 +7,7 @@ Represents a permanently failed job that can no longer be retried.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from queuectl.domain.value_objects.job_id import JobId
@@ -15,7 +15,7 @@ from queuectl.domain.value_objects.job_id import JobId
 
 def _utcnow() -> datetime:
     """Return the current UTC timestamp."""
-    return datetime.now(timezone.utc)
+    return datetime.now(UTC)
 
 
 @dataclass(slots=True)
@@ -42,7 +42,7 @@ class DlqEntry:
         retry_count: int,
         error_message: str,
         failed_at: datetime | None = None,
-    ) -> "DlqEntry":
+    ) -> DlqEntry:
         """
         Create a new DLQ entry.
 
@@ -112,7 +112,7 @@ class DlqEntry:
     def from_dict(
         cls,
         data: dict[str, Any],
-    ) -> "DlqEntry":
+    ) -> DlqEntry:
         """
         Deserialize a DLQ entry.
         """

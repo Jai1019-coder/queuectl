@@ -1,20 +1,10 @@
 """Command-line entry point for QueueCTL."""
 
-import typer
+from __future__ import annotations
 
-app = typer.Typer(
-    help="QueueCTL command line interface.",
-    invoke_without_command=True,
-    no_args_is_help=True,
-)
+from queuectl.cli.app import build_app
 
-
-@app.callback()
-def root(ctx: typer.Context) -> None:
-    """Show placeholder help until CLI commands are implemented."""
-    if ctx.invoked_subcommand is None:
-        typer.echo(ctx.get_help())
-
+app = build_app()
 
 if __name__ == "__main__":
     app()

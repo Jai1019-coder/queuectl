@@ -66,9 +66,7 @@ class RetryPolicy:
         """
 
         if not self.should_retry(retry_count):
-            raise RuntimeError(
-                "Retry limit exceeded. No further retries allowed."
-            )
+            raise RuntimeError("Retry limit exceeded. No further retries allowed.")
 
         return self.backoff.get_delay(retry_count + 1)
 
